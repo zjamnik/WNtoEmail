@@ -6,8 +6,8 @@ Script will pack your WebNovels into convinient eBooks, complete with cover imag
 It's a Node.js project so install that.
 Project is using `node-html-parser` and `nodemailer` libraries. It should be enough to:
 ```
-npm install node-html-parser --save
-npm install nodemailer --save
+npm install --save node-html-parser
+npm install --save nodemailer
 ```
 
 # Config
