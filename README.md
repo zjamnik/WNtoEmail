@@ -43,3 +43,6 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
     "novels": []                            // Table of 
 }
 ```
+
+# Usage
+Just run the script with Node.js. Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
