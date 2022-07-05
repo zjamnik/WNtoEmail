@@ -17,7 +17,7 @@ I'm using fetch, which is an experimental feature, it might work differently on 
 At first start it will create an empty config file `./novelConfig.conf`, adjust the setting according to comments below:
 ```
 {
-    "downloadLocation": "",                 // New chapter download location
+    "downloadLocation": "",                 // New chapter download location, "./Download" as an absolute path recommended
     "converterPath": "ebook-convert.exe",   // Calibre eBook converter, I recommend adding it to you PATH, NOT tested when it's not in PATH
     "ebookFormat": "epub",                  // Desired eBook format, Kindle started supporting epub so that's default
     "sendEmail": false,                     // If the script should send eBooks via email
@@ -46,6 +46,7 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
     "novels": []                            // Table of 
 }
 ```
+For some reason Amazon just forgets the cover and TOS on conversion from epuub. Both features worked correctly with mobi, but that format is being phased out. From what I found, Amazon is being an ass about it and is ignoring built in metadata in favor of getting them from their book database. So sending books not bought from them is made intentionally inferior.
 
 # Usage
 Just run the script with Node.js. Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
