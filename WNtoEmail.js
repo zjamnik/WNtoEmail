@@ -62,7 +62,8 @@ function loadConfig() {
 		"emailPassword": "",
 		"emailAttachments": 25,
 		"supportedHosting": {
-			"NF": "https://novelfull.com/"
+			"NF": "https://novelfull.com/",
+			"TNC": "https://thatnovelcorner.com/ external source, use with sendOnly = true"
 		},
 		"template": {
 			"novelURL": "",
@@ -75,7 +76,9 @@ function loadConfig() {
 			"hosting": "NF",
 			"volumeChapterCount": 5,
 			"completedVolumeChapterCount": 50,
-			"redownload": false // TODO: redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving
+			"redownload": false, // TODO: redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving
+			"sendOnly": false, // TODO: only send epub files via email, for cases with external source of epub files
+			"sendOnlyRegex": "(?<volume>\\d*). (?<title>.*); (?<author>.*)" // TODO: metadata regex for extracting information from filename for external sources
 		},
 		"novels": []
 	};
@@ -85,7 +88,7 @@ function loadConfig() {
 	if (configRead) {
 		config = JSON.parse(configRead);
 		transporter = nodemailer.createTransport({
-			service: config['emailProvider'], // no need to set host or port etc.
+			service: config['emailProvider'],
 			auth: {
 				user: config['emailUsername'],
 				pass: config['emailPassword']
@@ -98,8 +101,6 @@ function loadConfig() {
 		writeFile('.', 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
 		config = novelConfigDefault;
 	}
-
-	console.log(config);
 }
 
 function saveConfig() {
@@ -130,7 +131,7 @@ async function convertEbook(dir, file, params = { "cover": false, "authors": fal
 }
 
 
-async function sendEbook(subject, ebookAttachments) { //(dir, ebook, format = 'epub') {
+async function sendEbook(subject, ebookAttachments) {
 	if (config['sendEmail']) {
 		let splicedAttachments = [];
 		while (ebookAttachments.length > config['emailAttachments']) {
@@ -281,13 +282,6 @@ function getChapterContent(response, hosting) {
 async function main() {
 	loadConfig();
 
-	// let novelDirConvert = 'C:/Users/mateu/bin/LightNovel/' + 'Warlock of the Magus World';
-	// let fileName = ((1 + 1) < 10 ? '0' + (1 + 1) : (1 + 1)) + '. ' + 'The Wizard World' + '; ' + 'Get Lost'; 
-	// let fileName = `${(1 + 1) < 10 ? '0' + (1 + 1) : (1 + 1)}. ${'The Wizard World'}; ${'Get Lost'}`; 
-	// let fileName = `21. Warlock of the Magus World; The Plagiarist`; 
-	// convertEbook(novelDirConvert, fileName);
-	// await sendEbook(novelDirConvert, fileName);
-
 	for (let i = 0; i < config['novels'].length; ++i) {
 		let novel = clone(config['novels'][i]);
 		let chapters = [];
@@ -324,9 +318,6 @@ async function main() {
 				chapters.push(chapter);
 				nextChapterURL = chapter[1];
 			}
-
-			// writeFile(novelDir, 'chapters.json`, JSON.stringify(chapters))
-			//chapters = JSON.parse(readFile("C:\\Users\\mateu\\bin\\LightNovel\\chapters.json"))
 
 			let startVol = novel['lastVolume'];
 			let totalChapters = chapters.length;
@@ -366,10 +357,7 @@ async function main() {
 
 				chapters.splice(0, chap);
 			}
-			
-			//await sendEbook(novel['title'], ebookAttachments);
 
-			//ebookAttachments = [];
 			startVol = novel['lastVolume'];
 			totalChapters = chapters.length;
 

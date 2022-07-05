@@ -42,8 +42,10 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
         "volumeChapterCount": 5,            // After how many new/unread chapters to send a new eBook, ignored if WebNovel is completed
         "completedVolumeChapterCount": 50,  // How many chapters to pack per eBook
         "redownload": false                 // TODO: redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving
+        "sendOnly": false,                  // TODO: only send epub files via email, for cases with external source of epub files
+        "sendOnlyRegex": ""(?<volume>\\d*). (?<title>.*); (?<author>.*)"" // TODO: metadata regex for extracting information from filename for external sources
     },
-    "novels": []                            // Table of 
+    "novels": []                            // Table of novels to process
 }
 ```
 For some reason Amazon just forgets the cover and TOS on conversion from epub. Both features worked correctly with mobi, but that format is being phased out. From what I found, Amazon is being an ass about it and is ignoring built in metadata in favor of getting them from their book database. So sending books not bought from them is made intentionally inferior.
