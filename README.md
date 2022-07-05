@@ -24,7 +24,7 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
     "emailToAddress": "",                   // Email where to send your eBooks
     "emailFromAddress": "",                 // Important for Kindle deliveries, make sure you have it added in Kindle settings
     "emailProvider": "",                    // Gmail works fine, just need to set up 2FA and an app password
-    "emailUsername": "",                    // Usernam to your email account
+    "emailUsername": "",                    // Username to your email account
     "emailPassword": "",                    // Password to your email account
     "emailAttachments": 25,                 // How many eBooks to attach to a single email
     "supportedHosting": {                   // Enum to show which WebNovel host sites are supported, NOT configurable
@@ -46,11 +46,11 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
     "novels": []                            // Table of 
 }
 ```
-For some reason Amazon just forgets the cover and TOS on conversion from epuub. Both features worked correctly with mobi, but that format is being phased out. From what I found, Amazon is being an ass about it and is ignoring built in metadata in favor of getting them from their book database. So sending books not bought from them is made intentionally inferior.
+For some reason Amazon just forgets the cover and TOS on conversion from epub. Both features worked correctly with mobi, but that format is being phased out. From what I found, Amazon is being an ass about it and is ignoring built in metadata in favor of getting them from their book database. So sending books not bought from them is made intentionally inferior.
 
 # Usage
 Just run the script with Node.js. Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
-At present there is no crash resiliency, if the program crashes for any reason `` and `` config will not be cosistent and needs to be corrected. There is a copy of config file created at the start.
+At present there is no crash resiliency, if the program crashes for any reason `"lastChapterURL"`, `"lastVolume"` and `"completed"` config will not be cosistent and needs to be corrected. There is a copy of config file created at the start.
 
 ## Send to Kindle
 [Kindle help page](https://www.amazon.com/gp/help/customer/display.html?nodeId=GX9XLEVV8G4DB28H) can help you with setup. You need to assign the divice you want to use an email address (there should already be one with some random ID, you can change it something more convinient) and add your email used for sending to the allowed list.
