@@ -92,13 +92,14 @@ function loadConfig() {
 			}
 		});
 		writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
+		writeFile('.', 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
 	}
 	else {
 		writeFile('.', 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
 		config = novelConfigDefault;
 	}
 
-	console.log(config)
+	console.log(config);
 }
 
 function saveConfig() {
@@ -109,11 +110,12 @@ async function convertEbook(dir, file, params = { "cover": false, "authors": fal
 	let file1Path = cleanPath(`${dir}/${file}.${format}`);
 	let file2Path = cleanPath(`${dir}/${file}.${config['ebookFormat']}`);
 	let convertParams = ' --use-auto-toc';
-	//convertParams += format2 == 'epub' ? ' --epub-inline-toc' : '';
+	convertParams += config['ebookFormat'] == 'epub' ? ' --epub-inline-toc' : '';
 	convertParams += params['cover'] ? ` --cover "${params['cover']}"` : '';
 	convertParams += params['authors'] ? ` --authors "${params['authors']}"` : '';
 	convertParams += params['title'] ? ` --title "${params['title']}"` : '';
 
+	console.log(`Converting volume: ${file1Path}`);
 	exec(`${config['converterPath']} "${file1Path}" "${file2Path}"${convertParams}`, (error, stdout, stderr) => {
 		if (error) {
 			console.log(`error: ${error.message}`);
@@ -138,7 +140,7 @@ async function sendEbook(subject, ebookAttachments) { //(dir, ebook, format = 'e
 			splicedAttachments.push(ebookAttachments)
 		}
 
-		for (i = 0; i < splicedAttachments.length; ++i) {
+		for (let i = 0; i < splicedAttachments.length; ++i) {
 			let message = {
 				from: config['emailFromAddress'],
 				to: config['emailToAddress'],
@@ -286,7 +288,7 @@ async function main() {
 	// convertEbook(novelDirConvert, fileName);
 	// await sendEbook(novelDirConvert, fileName);
 
-	for (i = 0; i < config['novels'].length; ++i) {
+	for (let i = 0; i < config['novels'].length; ++i) {
 		let novel = clone(config['novels'][i]);
 		let chapters = [];
 		let nextChapterURL;
@@ -332,9 +334,11 @@ async function main() {
 			const maxVolume = novel['completed'] ? startVol + 1 + Math.floor(totalChapters / novel['completedVolumeChapterCount']) : startVol + Math.floor(totalChapters / novel['completedVolumeChapterCount']);
 
 			let ebookAttachments = [];
-			for (vol = startVol; vol < maxVolume; vol++) {
+
+			for (let vol = startVol; vol < maxVolume; vol++) {
 				let volContent = '';
 
+				let chap;
 				for (chap = 0; chap < novel['completedVolumeChapterCount'] && chap < chapters.length; chap++) {
 					volContent += chapters[chap][0] + '\n';
 				}
@@ -356,21 +360,23 @@ async function main() {
 				});
 
 				ebookAttachments.push({
-					name: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
+					filename: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
 					path: cleanPath(`${novelDir}/${novelFileName}.${config['ebookFormat']}`)
 				});
 
 				chapters.splice(0, chap);
 			}
-			await sendEbook(novel['title'], ebookAttachments);
+			
+			//await sendEbook(novel['title'], ebookAttachments);
 
-			ebookAttachments = [];
+			//ebookAttachments = [];
 			startVol = novel['lastVolume'];
 			totalChapters = chapters.length;
 
-			for (vol = startVol; vol < startVol + Math.floor(totalChapters / novel['volumeChapterCount']); vol++) {
+			for (let vol = startVol; vol < startVol + Math.floor(totalChapters / novel['volumeChapterCount']); vol++) {
 				let volContent = '';
 
+				let chap;
 				for (chap = 0; chap < novel['volumeChapterCount'] && chap < chapters.length; chap++) {
 					volContent += chapters[chap][0] + '\n';
 				}
@@ -392,7 +398,7 @@ async function main() {
 				});
 
 				ebookAttachments.push({
-					name: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
+					filename: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
 					path: cleanPath(`${novelDir}/${novelFileName}.${config['ebookFormat']}`)
 				});
 
