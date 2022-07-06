@@ -1,6 +1,6 @@
 # WNtoEmail
 Node.js script to download new WebNovel chapters convert them to eBook and send to email. Mainly intended for sending to Kindle.
-Script will pack your WebNovels into convinient eBooks, complete with cover image, metadata and table of contents. For ongoing series if will wait for a configured number of new chapters before sending a new volume to avoid spam.
+Script will pack your WebNovels into convinient eBooks, complete with cover image, metadata and table of contents. For ongoing series it will wait for a configured number of new chapters before sending a new volume to avoid spam.
 
 # Dependecies
 It's a Node.js project so install that.
@@ -50,9 +50,34 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
 ```
 For some reason Amazon just forgets the cover and TOS on conversion from epub. Both features worked correctly with mobi, but that format is being phased out. From what I found, Amazon is being an ass about it and is ignoring built in metadata in favor of getting them from their book database. So sending books not bought from them is made intentionally inferior.
 
+# Volume numbering
+Let's assume WN series has 168 chapters and we're using default settings:
+```
+"volumeChapterCount": 5,
+"completedVolumeChapterCount": 50,
+```
+
+For completed series it would create 4 volumes:
+- Volume 1 - chapters 1 - 50
+- Volume 2 - chapters 51 - 100
+- Volume 3 - chapters 100 - 150
+- Volume 4 - chapters 151 - 168
+
+For ongoing series it would create 6 volumes:
+- Volume 1 - chapters 1 - 50
+- Volume 2 - chapters 51 - 100
+- Volume 3 - chapters 100 - 150
+- Volume 4 - chapters 151 - 155
+- Volume 5 - chapters 155 - 160
+- Volume 6 - chapters 161 - 165
+- and a new volume for every 5 chapters released
+
+
 # Usage
 Grab the latest release and run the binary.
+
 OR
+
 Run the script directly from cloned project with Node.js.
 
 Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
