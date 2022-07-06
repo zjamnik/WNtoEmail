@@ -1,4 +1,5 @@
-const fs = require('fs');
+//const fs = require('fs');
+const fs = require('node:fs/promises');
 const path = require('path');
 const HTMLparser = require('node-html-parser');
 const exec = require("child_process").execSync;
@@ -24,32 +25,31 @@ function cleanPath(pathToClean) {
 	return cleanPath;
 }
 
-function writeFile(dir, file, data) {
+async function mkDir(dirPath) {
+    try {
+        await fs.access(cleanPath(dirPath));
+    }
+    catch (err)
+    {
+        await fs.mkdir(dirPath, { recursive: true});
+    }
+    await fs.access(cleanPath(dirPath));
+}
+
+async function writeFile(dir, file, data) {
 	let cleanDir = cleanPath(dir);
 	let cleanFile = cleanPath(file);
-
-	if (!fs.existsSync(cleanDir)) {
-		fs.mkdirSync(cleanDir, { recursive: true });
-	}
-	fs.writeFileSync(`${cleanDir}/${cleanFile}`, data, function (err) {
-		if (err != null) console.log(err);
-		return err != null;
-	});
+	
+    await mkDir(dir);
+	
+	return fs.writeFile(`${cleanDir}/${cleanFile}`, data);
 }
 
-function readFile(file) {
-	let fileContent;
-	try {
-		fileContent = fs.readFileSync(cleanPath(file), 'utf8');
-	}
-	catch (err) {
-		fileContent = false;
-	}
-
-	return fileContent;
+async function readFile(file, {format = 'utf8'} = {}) {
+	return fs.readFile(cleanPath(file), format);
 }
 
-function loadConfig() {
+async function loadConfig() {
 	let novelConfigDefault = {
 		"downloadLocation": "",
 		"converterPath": "ebook-convert.exe",
@@ -83,10 +83,8 @@ function loadConfig() {
 		"novels": []
 	};
 
-	let configRead = readFile('./novelConfig.conf');
-
-	if (configRead) {
-		config = JSON.parse(configRead);
+	try {
+		config = JSON.parse(await readFile('./novelConfig.conf'));
 		transporter = nodemailer.createTransport({
 			service: config['emailProvider'],
 			auth: {
@@ -94,17 +92,25 @@ function loadConfig() {
 				pass: config['emailPassword']
 			}
 		});
-		writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
-		writeFile('.', 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
+		await writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
+		await writeFile('.', 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
 	}
-	else {
-		writeFile('.', 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
+	catch (err) {
+		await writeFile('.', 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
 		config = novelConfigDefault;
 	}
+
+	transporter = nodemailer.createTransport({
+		service: config['emailProvider'],
+		auth: {
+			user: config['emailUsername'],
+			pass: config['emailPassword']
+		}
+	});
 }
 
-function saveConfig() {
-	writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
+async function saveConfig() {
+	await writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
 }
 
 async function convertEbook(dir, file, params = { "cover": false, "authors": false, "title": false }, format = 'html') {
@@ -131,7 +137,7 @@ async function convertEbook(dir, file, params = { "cover": false, "authors": fal
 }
 
 
-async function sendEbook(subject, ebookAttachments) {
+function sendEbook(subject, ebookAttachments) {
 	if (config['sendEmail']) {
 		let splicedAttachments = [];
 		while (ebookAttachments.length > config['emailAttachments']) {
@@ -150,7 +156,7 @@ async function sendEbook(subject, ebookAttachments) {
 				attachments: splicedAttachments[i]
 			}
 
-			await transporter.sendMail(message, (err) => {
+			transporter.sendMail(message, (err) => {
 				if (err)
 					console.log(err);
 
@@ -280,7 +286,7 @@ function getChapterContent(response, hosting) {
 }
 
 async function main() {
-	loadConfig();
+	await loadConfig();
 
 	for (let i = 0; i < config['novels'].length; ++i) {
 		let novel = clone(config['novels'][i]);
@@ -296,7 +302,7 @@ async function main() {
 			novel['coverURL'] = novelInfo[4];
 
 			config['novels'][i] = clone(novel);
-			saveConfig();
+			await saveConfig();
 
 			if (!novel['lastChapterURL']) {
 				novel['lastChapterURL'] = novelInfo[3];
@@ -337,11 +343,11 @@ async function main() {
 				novel['lastChapterURL'] = chapters[(chap - 2 < 0 ? 0 : chap - 2)][1];
 				novel['lastVolume'] = vol + 1;
 				config['novels'][i] = clone(novel);
-				saveConfig();
+				await saveConfig();
 
 				let novelFileName = `${(vol + 1) < 10 ? '0' + (vol + 1) : (vol + 1)}. ${novel['title']}; ${novel['author']}`;
 
-				writeFile(novelDir, `${novelFileName}.html`, volContent);
+				await writeFile(novelDir, `${novelFileName}.html`, volContent);
 				console.log(`Saved volume: ${novelFileName}`);
 
 				await convertEbook(novelDir, novelFileName, {
@@ -372,11 +378,11 @@ async function main() {
 				novel['lastChapterURL'] = chapters[(chap - 2 < 0 ? 0 : chap - 2)][1];
 				novel['lastVolume'] = vol + 1;
 				config['novels'][i] = clone(novel);
-				saveConfig();
+				await saveConfig();
 
 				let novelFileName = `${(vol + 1) < 10 ? '0' + (vol + 1) : (vol + 1)}. ${novel['title']}; ${novel['author']}`;
 
-				writeFile(novelDir, `${novelFileName}.html`, volContent);
+				await writeFile(novelDir, `${novelFileName}.html`, volContent);
 				console.log(`Saved volume: ${novelFileName}`);
 
 				await convertEbook(novelDir, novelFileName, {
@@ -392,7 +398,7 @@ async function main() {
 
 				chapters.splice(0, chap);
 			}
-			await sendEbook(novel['title'], ebookAttachments);
+			sendEbook(novel['title'], ebookAttachments);
 		}
 	}
 }
