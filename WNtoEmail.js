@@ -40,7 +40,7 @@ function padNumber(num, len) {
 function log(text) {
 	let d = new Date();
 	let datetime = `${d.getFullYear()}.${padNumber((d.getMonth() + 1), 2)}.${padNumber(d.getDate(), 2)}_${padNumber(d.getHours(), 2)}:${padNumber(d.getMinutes(), 2)}:${padNumber(d.getSeconds(), 2)}.${padNumber(d.getMilliseconds(), 3)}`;
-	fs.appendFile(cleanPath('./WNtoEmail.log'), `${datetime} ${text}\n`);
+	fs.appendFile(cleanPath(`${__dirname}/WNtoEmail.log`), `${datetime} ${text}\n`);
 }
 
 async function mkDir(dirPath) {
@@ -101,7 +101,7 @@ async function loadConfig() {
 	};
 
 	try {
-		config = JSON.parse(await readFile('./novelConfig.conf'));
+		config = JSON.parse(await readFile(`${__dirname}/novelConfig.conf`));
 		transporter = nodemailer.createTransport({
 			service: config['emailProvider'],
 			auth: {
