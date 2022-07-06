@@ -40,7 +40,7 @@ function padNumber(num, len) {
 function log(text) {
 	let d = new Date();
 	let datetime = `${d.getFullYear()}.${padNumber((d.getMonth() + 1), 2)}.${padNumber(d.getDate(), 2)}_${padNumber(d.getHours(), 2)}:${padNumber(d.getMinutes(), 2)}:${padNumber(d.getSeconds(), 2)}.${padNumber(d.getMilliseconds(), 3)}`;
-	fs.appendFile(cleanPath(`${__dirname}/WNtoEmail.log`), `${datetime} ${text}\n`);
+	fs.appendFile(cleanPath(`./WNtoEmail.log`), `${datetime} ${text}\n`);
 }
 
 async function mkDir(dirPath) {
@@ -101,7 +101,7 @@ async function loadConfig() {
 	};
 
 	try {
-		config = JSON.parse(await readFile(`${__dirname}/novelConfig.conf`));
+		config = JSON.parse(await readFile(`./novelConfig.conf`));
 		transporter = nodemailer.createTransport({
 			service: config['emailProvider'],
 			auth: {
@@ -109,11 +109,11 @@ async function loadConfig() {
 				pass: config['emailPassword']
 			}
 		});
-		await writeFile(__dirname, 'novelConfig.conf', JSON.stringify(config, null, 4));
-		await writeFile(__dirname, 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
+		await writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
+		await writeFile('.', 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
 	}
 	catch (err) {
-		await writeFile(__dirname, 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
+		await writeFile('.', 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
 		config = novelConfigDefault;
 	}
 
