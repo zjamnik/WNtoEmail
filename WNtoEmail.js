@@ -354,8 +354,9 @@ async function main() {
 			let startVol = novel['lastVolume'];
 			let totalChapters = chapters.length;
 
-			const maxVolume = novel['completed'] ? startVol + 1 + Math.floor(totalChapters / novel['completedVolumeChapterCount']) : startVol + Math.floor(totalChapters / novel['completedVolumeChapterCount']);
-			const maxVolLen = (novel['completed'] ? maxVolume : maxVolume + Math.floor((chapters.length - (maxVolume + novel['completedVolumeChapterCount'])) / novel['volumeChapterCount'])).toString().length;
+			const maxVolume = novel['completed'] ? startVol + Math.ceil(totalChapters / novel['completedVolumeChapterCount']) : startVol + Math.floor(totalChapters / novel['completedVolumeChapterCount']);
+			const maxVolLen = (novel['completed'] ? maxVolume : 
+			maxVolume + Math.floor((chapters.length - (maxVolume * novel['completedVolumeChapterCount'])) / novel['volumeChapterCount'])).toString().length;
 
 			let ebookAttachments = [];
 
