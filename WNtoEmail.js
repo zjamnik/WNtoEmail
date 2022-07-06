@@ -25,9 +25,21 @@ function cleanPath(pathToClean) {
 	return cleanPath;
 }
 
+function padNumber(num, len) {
+	let strNum = num.toString();
+    let negative = num < 0;
+    if (negative) strNum = strNum.substr(1);
+
+    while(strNum.length < len) {
+        strNum = '0' + strNum;
+    }
+
+    return (negative ? '-' : '') + strNum;
+}
+
 function log(text) {
 	let d = new Date();
-	let datetime = `${d.getFullYear()}.${(d.getMonth() + 1)}.${d.getDate()}_${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}.${d.getMilliseconds()}`;
+	let datetime = `${d.getFullYear()}.${padNumber((d.getMonth() + 1), 2)}.${padNumber(d.getDate(), 2)}_${padNumber(d.getHours(), 2)}:${padNumber(d.getMinutes(), 2)}:${padNumber(d.getSeconds(), 2)}.${padNumber(d.getMilliseconds(), 3)}`;
 	fs.appendFile(cleanPath('./WNtoEmail.log'), `${datetime} ${text}\n`);
 }
 
@@ -81,8 +93,8 @@ async function loadConfig() {
 			"hosting": "NF",
 			"volumeChapterCount": 5,
 			"completedVolumeChapterCount": 50,
-			"redownload": false, // TODO: redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving
-			"sendOnly": false, // TODO: only send epub files via email, for cases with external source of epub files
+			"redownload": false, // TODO: redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving or resetting "lastVolume" to a more reasonable number
+			"sendOnly": false, // TODO: only send epub files via email, for cases with external source of epub files or after "redownload"
 			"sendOnlyRegex": "(?<volume>\\d*). (?<title>.*); (?<author>.*)" // TODO: metadata regex for extracting information from filename for external sources
 		},
 		"novels": []
@@ -333,8 +345,8 @@ async function main() {
 			while (nextChapterURL) {
 				novel['lastChapterURL'] = nextChapterURL;
 				let chapter = await fetchChapter(nextChapterURL, 'NF');
-				console.log('Download chapter ' + chapters.length + ' ' + nextChapterURL);
-				log('Download chapter ' + chapters.length + ' ' + nextChapterURL);
+				console.log('Downloaded chapter: ' + chapters.length + ' ' + nextChapterURL);
+				log('Downloaded chapter: ' + chapters.length + ' ' + nextChapterURL);
 				chapters.push(chapter);
 				nextChapterURL = chapter[1];
 			}
@@ -343,6 +355,7 @@ async function main() {
 			let totalChapters = chapters.length;
 
 			const maxVolume = novel['completed'] ? startVol + 1 + Math.floor(totalChapters / novel['completedVolumeChapterCount']) : startVol + Math.floor(totalChapters / novel['completedVolumeChapterCount']);
+			const maxVolLen = (novel['completed'] ? maxVolume : maxVolume + Math.floor((chapters.length - (maxVolume + novel['completedVolumeChapterCount'])) / novel['volumeChapterCount'])).toString().length;
 
 			let ebookAttachments = [];
 
@@ -359,7 +372,7 @@ async function main() {
 				config['novels'][i] = clone(novel);
 				await saveConfig();
 
-				let novelFileName = `${(vol + 1) < 10 ? '0' + (vol + 1) : (vol + 1)}. ${novel['title']}; ${novel['author']}`;
+				let novelFileName = `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}; ${novel['author']}`;
 
 				await writeFile(novelDir, `${novelFileName}.html`, volContent);
 				console.log(`Saved volume: ${novelFileName}`);
@@ -368,7 +381,7 @@ async function main() {
 				await convertEbook(novelDir, novelFileName, {
 					cover: novel['coverURL'],
 					authors: novel['author'],
-					title: `${(vol + 1) < 10 ? '0' + (vol + 1) : (vol + 1)}. ${novel['title']}`
+					title: `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}`
 				});
 
 				ebookAttachments.push({
@@ -395,7 +408,7 @@ async function main() {
 				config['novels'][i] = clone(novel);
 				await saveConfig();
 
-				let novelFileName = `${(vol + 1) < 10 ? '0' + (vol + 1) : (vol + 1)}. ${novel['title']}; ${novel['author']}`;
+				let novelFileName = `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}; ${novel['author']}`;
 
 				await writeFile(novelDir, `${novelFileName}.html`, volContent);
 				console.log(`Saved volume: ${novelFileName}`);
@@ -404,7 +417,7 @@ async function main() {
 				await convertEbook(novelDir, novelFileName, {
 					cover: novel['coverURL'],
 					authors: novel['author'],
-					title: `${(vol + 1) < 10 ? '0' + (vol + 1) : (vol + 1)}. ${novel['title']}`
+					title: `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}`
 				});
 
 				ebookAttachments.push({
