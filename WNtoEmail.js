@@ -25,27 +25,32 @@ function cleanPath(pathToClean) {
 	return cleanPath;
 }
 
+function log(text) {
+	let d = new Date();
+	let datetime = `${d.getFullYear()}.${(d.getMonth() + 1)}.${d.getDate()}_${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}.${d.getMilliseconds()}`;
+	fs.appendFile(cleanPath('./WNtoEmail.log'), `${datetime} ${text}\n`);
+}
+
 async function mkDir(dirPath) {
-    try {
-        await fs.access(cleanPath(dirPath));
-    }
-    catch (err)
-    {
-        await fs.mkdir(dirPath, { recursive: true});
-    }
-    await fs.access(cleanPath(dirPath));
+	try {
+		await fs.access(cleanPath(dirPath));
+	}
+	catch (err) {
+		await fs.mkdir(dirPath, { recursive: true });
+	}
+	await fs.access(cleanPath(dirPath));
 }
 
 async function writeFile(dir, file, data) {
 	let cleanDir = cleanPath(dir);
 	let cleanFile = cleanPath(file);
-	
-    await mkDir(dir);
-	
+
+	await mkDir(dir);
+
 	return fs.writeFile(`${cleanDir}/${cleanFile}`, data);
 }
 
-async function readFile(file, {format = 'utf8'} = {}) {
+async function readFile(file, { format = 'utf8' } = {}) {
 	return fs.readFile(cleanPath(file), format);
 }
 
@@ -123,16 +128,21 @@ async function convertEbook(dir, file, params = { "cover": false, "authors": fal
 	convertParams += params['title'] ? ` --title "${params['title']}"` : '';
 
 	console.log(`Converting volume: ${file1Path}`);
+	log(`Converting volume: ${file1Path}`);
+
 	exec(`${config['converterPath']} "${file1Path}" "${file2Path}"${convertParams}`, (error, stdout, stderr) => {
 		if (error) {
 			console.log(`error: ${error.message}`);
+			log(`error: ${error.message}`);
 			return;
 		}
 		if (stderr) {
 			console.log(`stderr: ${stderr}`);
+			log(`stderr: ${stderr}`);
 			return;
 		}
 		console.log(`stdout: ${stdout}`);
+		log(`stdout: ${stdout}`);
 	});
 }
 
@@ -151,18 +161,20 @@ function sendEbook(subject, ebookAttachments) {
 			let message = {
 				from: config['emailFromAddress'],
 				to: config['emailToAddress'],
-				subject: subject + ' part ' + i,
-				text: subject + ' part ' + i,
+				subject: subject + ' part ' + (i + 1),
+				text: subject + ' part ' + (i + 1),
 				attachments: splicedAttachments[i]
 			}
 
 			transporter.sendMail(message, (err) => {
 				if (err)
 					console.log(err);
-
-				else
-					console.log(`Sent volume ${ebook}`);
+				log(err);
 			});
+
+			console.log(`Sent volumes:`);
+			log(`Sent volumes:`);
+			splicedAttachments[i].forEach(elem => console.log(elem['filename']))
 		}
 	}
 }
@@ -309,6 +321,7 @@ async function main() {
 
 				let chapter = await fetchChapter(novelInfo[3], 'NF');
 				console.log('Download chapter ' + chapters.length + ' ' + novelInfo[3]);
+				log('Download chapter ' + chapters.length + ' ' + novelInfo[3]);
 				chapters.push(chapter);
 			}
 
@@ -321,6 +334,7 @@ async function main() {
 				novel['lastChapterURL'] = nextChapterURL;
 				let chapter = await fetchChapter(nextChapterURL, 'NF');
 				console.log('Download chapter ' + chapters.length + ' ' + nextChapterURL);
+				log('Download chapter ' + chapters.length + ' ' + nextChapterURL);
 				chapters.push(chapter);
 				nextChapterURL = chapter[1];
 			}
@@ -349,6 +363,7 @@ async function main() {
 
 				await writeFile(novelDir, `${novelFileName}.html`, volContent);
 				console.log(`Saved volume: ${novelFileName}`);
+				log(`Saved volume: ${novelFileName}`);
 
 				await convertEbook(novelDir, novelFileName, {
 					cover: novel['coverURL'],
@@ -384,6 +399,7 @@ async function main() {
 
 				await writeFile(novelDir, `${novelFileName}.html`, volContent);
 				console.log(`Saved volume: ${novelFileName}`);
+				log(`Saved volume: ${novelFileName}`);
 
 				await convertEbook(novelDir, novelFileName, {
 					cover: novel['coverURL'],
