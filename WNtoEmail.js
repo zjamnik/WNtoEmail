@@ -109,11 +109,11 @@ async function loadConfig() {
 				pass: config['emailPassword']
 			}
 		});
-		await writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
-		await writeFile('.', 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
+		await writeFile(__dirname, 'novelConfig.conf', JSON.stringify(config, null, 4));
+		await writeFile(__dirname, 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
 	}
 	catch (err) {
-		await writeFile('.', 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
+		await writeFile(__dirname, 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
 		config = novelConfigDefault;
 	}
 
@@ -127,7 +127,7 @@ async function loadConfig() {
 }
 
 async function saveConfig() {
-	await writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
+	await writeFile(__dirname, 'novelConfig.conf', JSON.stringify(config, null, 4));
 }
 
 async function convertEbook(dir, file, params = { "cover": false, "authors": false, "title": false }, format = 'html') {
