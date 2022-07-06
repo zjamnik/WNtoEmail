@@ -1,6 +1,7 @@
 # Project specific
 Download/**/** 
 *.conf
+Release
 
 # Logs
 logs

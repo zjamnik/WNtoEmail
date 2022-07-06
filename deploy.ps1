@@ -1,0 +1,1 @@
+pkg .\WNtoEmail.js --out-path ./Release
