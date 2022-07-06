@@ -51,7 +51,11 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
 For some reason Amazon just forgets the cover and TOS on conversion from epub. Both features worked correctly with mobi, but that format is being phased out. From what I found, Amazon is being an ass about it and is ignoring built in metadata in favor of getting them from their book database. So sending books not bought from them is made intentionally inferior.
 
 # Usage
-Just run the script with Node.js. Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
+Grab the latest release and run the binary.
+OR
+Run the script directly from cloned project with Node.js.
+
+Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
 At present there is no crash resiliency, if the program crashes for any reason `"lastChapterURL"`, `"lastVolume"` and `"completed"` config will not be cosistent and needs to be corrected. There is a copy of config file created at the start.
 
 ## Send to Kindle
