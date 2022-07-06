@@ -60,15 +60,15 @@ Let's assume WN series has 168 chapters and we're using default settings:
 For completed series it would create 4 volumes:
 - Volume 1 - chapters 1 - 50
 - Volume 2 - chapters 51 - 100
-- Volume 3 - chapters 100 - 150
+- Volume 3 - chapters 101 - 150
 - Volume 4 - chapters 151 - 168
 
 For ongoing series it would create 6 volumes:
 - Volume 1 - chapters 1 - 50
 - Volume 2 - chapters 51 - 100
-- Volume 3 - chapters 100 - 150
+- Volume 3 - chapters 101 - 150
 - Volume 4 - chapters 151 - 155
-- Volume 5 - chapters 155 - 160
+- Volume 5 - chapters 156 - 160
 - Volume 6 - chapters 161 - 165
 - and a new volume for every 5 chapters released
 
