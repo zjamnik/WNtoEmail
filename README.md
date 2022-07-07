@@ -1,14 +1,16 @@
 # WNtoEmail
 Node.js script to download new WebNovel chapters convert them to eBook and send to email. Mainly intended for sending to Kindle.
-Script will pack your WebNovels into convinient eBooks, complete with cover image, metadata and table of contents. For ongoing series it will wait for a configured number of new chapters before sending a new volume to avoid spam.
+Script will pack your WebNovels into convenient eBooks, complete with cover image, metadata and table of contents. For ongoing series it will wait for a configured number of new chapters before sending a new volume to avoid spam.
 
-# Dependecies
+# Dependencies
 It's a Node.js project so install that.
 Project is using `node-html-parser` and `nodemailer` libraries. It should be enough to:
 ```
 npm install --save node-html-parser
 npm install --save nodemailer
 ```
+
+https://github.com/vercel/pkg for deploying to binary files.
 
 I'm using fetch, which is an experimental feature, it might work differently on different versions. Script written on Node version `v18.4.0`
 > ExperimentalWarning: The Fetch API is an experimental feature. This feature could change at any time
@@ -81,7 +83,7 @@ OR
 Run the script directly from cloned project with Node.js.
 
 Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
-At present there is no crash resiliency, if the program crashes for any reason `"lastChapterURL"`, `"lastVolume"` and `"completed"` config will not be cosistent and needs to be corrected. There is a copy of config file created at the start.
+At present there is no crash resiliency, if the program crashes for any reason `"lastChapterURL"`, `"lastVolume"` and `"completed"` config will not be consistent and needs to be corrected. There is a copy of config file created at the start.
 
 ## Send to Kindle
-[Kindle help page](https://www.amazon.com/gp/help/customer/display.html?nodeId=GX9XLEVV8G4DB28H) can help you with setup. You need to assign the divice you want to use an email address (there should already be one with some random ID, you can change it something more convinient) and add your email used for sending to the allowed list.
+[Kindle help page](https://www.amazon.com/gp/help/customer/display.html?nodeId=GX9XLEVV8G4DB28H) can help you with setup. You need to assign the device you want to use an email address (there should already be one with some random ID, you can change it something more convenient) and add your email used for sending to the allowed list.

@@ -1,4 +1,3 @@
-//const fs = require('fs');
 const fs = require('node:fs/promises');
 const path = require('path');
 const HTMLparser = require('node-html-parser');
@@ -39,8 +38,8 @@ function padNumber(num, len) {
 
 function log(text) {
 	let d = new Date();
-	let datetime = `${d.getFullYear()}.${padNumber((d.getMonth() + 1), 2)}.${padNumber(d.getDate(), 2)}_${padNumber(d.getHours(), 2)}:${padNumber(d.getMinutes(), 2)}:${padNumber(d.getSeconds(), 2)}.${padNumber(d.getMilliseconds(), 3)}`;
-	fs.appendFile(cleanPath(`./WNtoEmail.log`), `${datetime} ${text}\n`);
+	let dateTime = `${d.getFullYear()}.${padNumber((d.getMonth() + 1), 2)}.${padNumber(d.getDate(), 2)}_${padNumber(d.getHours(), 2)}:${padNumber(d.getMinutes(), 2)}:${padNumber(d.getSeconds(), 2)}.${padNumber(d.getMilliseconds(), 3)}`;
+	fs.appendFile(cleanPath(`./WNtoEmail.log`), `${dateTime} ${text}\n`);
 }
 
 async function mkDir(dirPath) {
@@ -191,7 +190,7 @@ function sendEbook(subject, ebookAttachments) {
 	}
 }
 
-async function fetch_smth(URL, hosting) {
+async function fetch_something(URL, hosting) {
 	let fetchURL = await fetch(URL);
 
 	if (fetchURL.ok) {
@@ -316,6 +315,12 @@ async function main() {
 		let novel = clone(config['novels'][i]);
 		let chapters = [];
 		let nextChapterURL;
+
+		if (novel['redownload']) {
+			novel['completed'] = false;
+			novel['lastChapterURL'] = false;
+			novel['lastVolume'] = 0;
+		}
 
 		if (!novel['completed']) {
 			let novelInfo = await fetchNovelInfo(novel['novelURL'], 'NF');
