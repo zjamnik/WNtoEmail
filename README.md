@@ -43,7 +43,7 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
         "hosting": "NF",                    // Hosting code, see "supportedHosting"
         "volumeChapterCount": 5,            // After how many new/unread chapters to send a new eBook, ignored if WebNovel is completed
         "completedVolumeChapterCount": 50,  // How many chapters to pack per eBook
-        "redownload": false                 // TODO: redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving
+        "redownload": false                 // Redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving
         "sendOnly": false,                  // TODO: only send epub files via email, for cases with external source of epub files
         "sendOnlyRegex": ""(?<volume>\\d*). (?<title>.*); (?<author>.*)"" // TODO: metadata regex for extracting information from filename for external sources
     },

@@ -26,14 +26,14 @@ function cleanPath(pathToClean) {
 
 function padNumber(num, len) {
 	let strNum = num.toString();
-    let negative = num < 0;
-    if (negative) strNum = strNum.substr(1);
+	let negative = num < 0;
+	if (negative) strNum = strNum.substr(1);
 
-    while(strNum.length < len) {
-        strNum = '0' + strNum;
-    }
+	while (strNum.length < len) {
+		strNum = '0' + strNum;
+	}
 
-    return (negative ? '-' : '') + strNum;
+	return (negative ? '-' : '') + strNum;
 }
 
 function log(text) {
@@ -92,7 +92,7 @@ async function loadConfig() {
 			"hosting": "NF",
 			"volumeChapterCount": 5,
 			"completedVolumeChapterCount": 50,
-			"redownload": false, // TODO: redownload all chapters, repack into volumes with completedVolumeChapterCount, do not send via email, intended for completed series archiving or resetting "lastVolume" to a more reasonable number
+			"redownload": false,
 			"sendOnly": false, // TODO: only send epub files via email, for cases with external source of epub files or after "redownload"
 			"sendOnlyRegex": "(?<volume>\\d*). (?<title>.*); (?<author>.*)" // TODO: metadata regex for extracting information from filename for external sources
 		},
@@ -337,8 +337,8 @@ async function main() {
 				novel['lastChapterURL'] = novelInfo[3];
 
 				let chapter = await fetchChapter(novelInfo[3], 'NF');
-				console.log('Download chapter ' + chapters.length + ' ' + novelInfo[3]);
-				log('Download chapter ' + chapters.length + ' ' + novelInfo[3]);
+				console.log('Downloaded chapter: ' + chapters.length + ' ' + novelInfo[3]);
+				log('Downloaded chapter: ' + chapters.length + ' ' + novelInfo[3]);
 				chapters.push(chapter);
 			}
 
@@ -360,8 +360,8 @@ async function main() {
 			let totalChapters = chapters.length;
 
 			const maxVolume = novel['completed'] ? startVol + Math.ceil(totalChapters / novel['completedVolumeChapterCount']) : startVol + Math.floor(totalChapters / novel['completedVolumeChapterCount']);
-			const maxVolLen = (novel['completed'] ? maxVolume : 
-			maxVolume + Math.floor((chapters.length - (maxVolume * novel['completedVolumeChapterCount'])) / novel['volumeChapterCount'])).toString().length;
+			const maxVolLen = (novel['completed'] ? maxVolume :
+				maxVolume + Math.floor((chapters.length - (maxVolume * novel['completedVolumeChapterCount'])) / novel['volumeChapterCount'])).toString().length;
 
 			let ebookAttachments = [];
 
@@ -433,7 +433,14 @@ async function main() {
 
 				chapters.splice(0, chap);
 			}
-			sendEbook(novel['title'], ebookAttachments);
+			if (!novel['redownload']) {
+				sendEbook(novel['title'], ebookAttachments);
+			}
+			else {
+				novel['redownload'] = false;
+				config['novels'][i] = clone(novel);
+				saveConfig();
+			}
 		}
 	}
 }
