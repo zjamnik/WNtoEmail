@@ -18,7 +18,7 @@ function cleanPath(pathToClean) {
 	let isAbsolute = path.isAbsolute(cleanPath);
 	cleanPath = cleanPath.replace(regex, '');
 	if (/^win/i.test(process.platform) && isAbsolute) {
-		cleanPath = `${cleanPath.slice(0, 1)}:${cleanPath.slice(1)}`
+		cleanPath = `${cleanPath.slice(0, 1)}:${cleanPath.slice(1)}`;
 	}
 
 	return cleanPath;
@@ -86,7 +86,7 @@ async function loadConfig() {
 			"title": "",
 			"author": "",
 			"coverURL": "",
-			"lastChapterURL": false,
+			"lastChapterURL": "",
 			"lastVolume": 0,
 			"completed": false,
 			"hosting": "NF",
@@ -162,10 +162,10 @@ function sendEbook(subject, ebookAttachments) {
 	if (config['sendEmail']) {
 		let splicedAttachments = [];
 		while (ebookAttachments.length > config['emailAttachments']) {
-			splicedAttachments.push(ebookAttachments.splice(0, config['emailAttachments']))
+			splicedAttachments.push(ebookAttachments.splice(0, config['emailAttachments']));
 		}
 		if (ebookAttachments.length > 0) {
-			splicedAttachments.push(ebookAttachments)
+			splicedAttachments.push(ebookAttachments);
 		}
 
 		for (let i = 0; i < splicedAttachments.length; ++i) {
@@ -175,7 +175,7 @@ function sendEbook(subject, ebookAttachments) {
 				subject: subject + ' part ' + (i + 1),
 				text: subject + ' part ' + (i + 1),
 				attachments: splicedAttachments[i]
-			}
+			};
 
 			transporter.sendMail(message, (err) => {
 				if (err)
@@ -185,7 +185,7 @@ function sendEbook(subject, ebookAttachments) {
 
 			console.log(`Sent volumes:`);
 			log(`Sent volumes:`);
-			splicedAttachments[i].forEach(elem => console.log(elem['filename']))
+			splicedAttachments[i].forEach(elem => console.log(elem['filename']));
 		}
 	}
 }
