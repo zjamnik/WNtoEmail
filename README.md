@@ -59,7 +59,7 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
         "sendOnlyFormat": "epub"            // Format filter for sendOnly files
         "sendOnlyConvert": true,            // Convert sendOnly files, epub => epub is supported,
                                                // useful for compressing images in big files
-        "sendOnlyRegex": ""(?<volume>\\d*). (?<title>.*); (?<author>.*)"" // Metadata regex for extracting
+        "sendOnlyRegex": "(?<volume>\\d*). (?<title>.*); (?<author>.*)" // Metadata regex for extracting
                                                // information from filename for external sources
     },
     "novels": [
@@ -94,11 +94,7 @@ For ongoing series it would create 6 volumes:
 
 
 # Usage
-Grab the latest release and run the binary.
-
-OR
-
-Run the script directly from cloned project with Node.js.
+Run the script with node.
 
 Intended usage is with a Task Scheduler on Windows. There shouldn't be anything OS specific. Cron on Linux should work after modifying `"converterPath"` to an appropriate command, but that's untested.
 At present there is no crash resiliency, if the program crashes for any reason `"lastChapterURL"`, `"lastVolume"` and `"completed"` config will not be consistent and needs to be corrected. There is a copy of config file created at the start.

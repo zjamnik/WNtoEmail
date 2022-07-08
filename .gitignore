@@ -2,6 +2,7 @@
 Download/**/** 
 *.conf
 Release
+WNtoEmail
 
 # Logs
 logs
