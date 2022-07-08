@@ -95,6 +95,8 @@ async function loadConfig() {
 			"completedVolumeChapterCount": 50,
 			"redownload": false,
 			"sendOnly": false,
+			"sendOnlyFormat": "epub",
+			"sendOnlyConvert": true,
 			"sendOnlyRegex": "(?<volume>\\d*). (?<title>.*); (?<author>.*)"
 		},
 		"novels": []
@@ -130,18 +132,18 @@ async function saveConfig() {
 	await writeFile(__dirname, 'novelConfig.conf', JSON.stringify(config, null, 4));
 }
 
-async function convertEbook(dir, file, params = { "cover": false, "authors": false, "title": false }, format = 'html') {
+async function convertEbook(dir, file, { cover = false, authors = false, title = false, format = 'html', file2 = false } = {}) {
 	let file1Path = cleanPath(`${dir}/${file}.${format}`);
-	let file2Path = cleanPath(`${dir}/${file}.${config['ebookFormat']}`);
+	let file2Path = cleanPath(`${dir}/${file2 ? file2 : file}.${config['ebookFormat']}`);
 	let convertParams = ' --use-auto-toc';
 	convertParams += config['ebookFormat'] == 'epub' ? ' --epub-inline-toc' : '';
-	convertParams += params['cover'] ? ` --cover "${params['cover']}"` : '';
-	convertParams += params['authors'] ? ` --authors "${params['authors']}"` : '';
-	convertParams += params['title'] ? ` --title "${params['title']}"` : '';
+	convertParams += cover ? ` --cover "${cover}"` : '';
+	convertParams += authors ? ` --authors "${authors}"` : '';
+	convertParams += title ? ` --title "${title}"` : '';
 
 	log(`Converting volume: ${file1Path}`);
 
-	exec(`${config['converterPath']} "${file1Path}" "${file2Path}"${convertParams}`, (error, stdout, stderr) => {
+	let convertOutput = exec(`${config['converterPath']} "${file1Path}" "${file2Path}"${convertParams}`, function (error, stdout, stderr) {
 		if (error) {
 			log(`error: ${error.message}`);
 			return;
@@ -152,6 +154,8 @@ async function convertEbook(dir, file, params = { "cover": false, "authors": fal
 		}
 		log(`stdout: ${stdout}`);
 	});
+
+	log(convertOutput.toString());
 }
 
 
@@ -316,7 +320,7 @@ function getChapterContent(response, hosting) {
 async function main() {
 	await loadConfig();
 
-	for (let i = 9; i < config['novels'].length; ++i) {
+	for (let i = 0; i < config['novels'].length; ++i) {
 		let novel = clone(config['novels'][i]);
 
 		if (novel['redownload']) {
@@ -337,7 +341,7 @@ async function main() {
 	async function sendOnlyFunction(novel, i) {
 		let ebookAttachments = [];
 		const novelPath = `${config.downloadLocation}/${novel.title}`;
-		const novelVolumeRegex = new RegExp(novel.sendOnlyRegex);
+		const novelVolumeRegex = new RegExp(novel.sendOnlyRegex + '.' + novel.sendOnlyFormat);
 
 		let lastVolumeOnline = parseInt(await fetchNovelInfo(novel['novelURL'], 'TNC'));
 
@@ -351,14 +355,25 @@ async function main() {
 		try {
 			const files = await fs.readdir(cleanPath(novelPath));
 			for (const file of files) {
-				if (file.match(new RegExp(config.ebookFormat))) {
-					const lastVolume = parseInt(file.match(novelVolumeRegex).groups.volume);
-					if (lastVolume > novel.lastVolume) {
-						ebookAttachments.push({
-							filename: cleanPath(`${file}`),
-							path: cleanPath(`${novelPath}/${file}`)
-						});
-						novel.lastVolume = lastVolume;
+				let volumeMatch = file.match(novelVolumeRegex);
+				if (volumeMatch) {
+					const currentVolume = parseInt(volumeMatch.groups.volume);
+					if (currentVolume > novel.lastVolume) {
+						if (novel.sendOnlyConvert) {
+							convertEbook(novelPath, path.parse(file).name, { format: novel.sendOnlyFormat, title: `${padNumber(currentVolume, 2)}. ${novel.title}`, file2: `${padNumber(currentVolume, 2)}. ${novel.title}` });
+
+							ebookAttachments.push({
+								filename: cleanPath(`${padNumber(currentVolume, 2)}. ${novel.title}.${config.ebookFormat}`),
+								path: cleanPath(`${novelPath}/${padNumber(currentVolume, 2)}. ${novel.title}.${config.ebookFormat}`)
+							});
+
+						} else {
+							ebookAttachments.push({
+								filename: cleanPath(`${file}`),
+								path: cleanPath(`${novelPath}/${file}`)
+							});
+						}
+						novel.lastVolume = currentVolume;
 					}
 				}
 			}

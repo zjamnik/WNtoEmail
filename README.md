@@ -56,6 +56,9 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
                                                // email, intended for completed series archiving
         "sendOnly": false,                  // Only send epub files via email, for cases with external
                                                // source of epub files
+        "sendOnlyFormat": "epub"            // Format filter for sendOnly files
+        "sendOnlyConvert": true,            // Convert sendOnly files, epub => epub is supported,
+                                               // useful for compressing images in big files
         "sendOnlyRegex": ""(?<volume>\\d*). (?<title>.*); (?<author>.*)"" // Metadata regex for extracting
                                                // information from filename for external sources
     },
