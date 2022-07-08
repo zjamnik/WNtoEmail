@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WNtoEmail config editor</title>
+    <style>
+        div {
+            margin-bottom: 20px;
+            padding: 5px;
+            width: fit-content;
+        }
+
+        div.novels {
+            margin-left: 20px;
+        }
+
+        label {
+            width: 200px;
+            display: inline-block;
+        }
+
+        div.novelSettings {
+            border: 1px solid black;
+        }
+
+        div.novelSettings>label {
+            width: 180px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"] {
+            width: 300px;
+        }
+
+        textarea {
+            display: block;
+        }
+    </style>
+    <script type="text/javascript">
+        function addNovel() {
+            document.querySelector('div.novels').innerHTML += '---novelTemplate---'.replace(/---novelTemplateHTML---/g, );
+        }
+    </script>
+</head>
+
+<body>
+    <form id="novelConfig" method="POST">
+        <div class="globalSetting">
+            <label for="downloadLocation">Download location</label><input type="text" name="downloadLocation"
+                value="---downloadLocation---"><br>
+            <label for="converterPath">Converter command</label><input type="text" name="converterPath"
+                value="---converterPath---"><br>
+            <label for="ebookFormat">Ebook format</label><input type="text" name="ebookFormat"
+                value="---ebookFormat---"><br>
+            <label for="sendEmail">Send email</label><input type="checkbox" name="sendEmail" ---sendEmail---><br>
+            <label for="emailToAddress">Email 'To' address</label><input type="text" name="emailToAddress"
+                value="---emailToAddress---"><br>
+            <label for="emailFromAddress">Email 'From' address</label><input type="text" name="emailFromAddress"
+                value="---emailFromAddress---"><br>
+            <label for="emailProvider">Email provider</label><input type="text" name="emailProvider"
+                value="---emailProvider---"><br>
+            <label for="emailUsername">Email username</label><input type="text" name="emailUsername"
+                value="---emailUsername---"><br>
+            <label for="emailPassword">Email password</label><input type="password" name="emailPassword"
+                value="---emailPassword---"><br>
+            <label for="emailAttachments">Email attachments</label><input type="number" name="emailAttachments"
+                value="---emailAttachments---">
+            <textarea name="supportedHosting">---supportedHosting---</textarea>
+            <textarea name="template">---template---</textarea>
+        </div>
+        <div class="novels">
+            ---novels---
+        </div>
+        <input type="submit">
+    </form>
+    <button onclick="addNovel()">Add novel</button>
+</body>
+
+</html>
