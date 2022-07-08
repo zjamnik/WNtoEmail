@@ -20,15 +20,15 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
 ```
 {
     "downloadLocation": "",                 // New chapter download location, "./Download" as an absolute
-                                            // path recommended
+                                               // path recommended
     "converterPath": "ebook-convert.exe",   // Calibre eBook converter, I recommend adding it to you PATH,
-                                            // NOT tested when it's not in PATH
+                                               // NOT tested when it's not in PATH
     "ebookFormat": "epub",                  // Desired eBook format, Kindle started supporting epub so
-                                            // that's default
+                                               // that's default
     "sendEmail": false,                     // If the script should send eBooks via email
     "emailToAddress": "",                   // Email where to send your eBooks
     "emailFromAddress": "",                 // Important for Kindle deliveries, make sure you have it added
-                                            // in Kindle settings
+                                               // in Kindle settings
     "emailProvider": "",                    // Gmail works fine, just need to set up 2FA and an app password
     "emailUsername": "",                    // Username to your email account
     "emailPassword": "",                    // Password to your email account
@@ -38,30 +38,30 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
     },
     "template": {                           // Template for a WebNovel entry in "novels" below
         "novelURL": "",                     // WebNovel address, it's enough to copy this template to
-                                            // "novels" and fill only this field to start
+                                               // "novels" and fill only this field to start
         "title": "",                        // Autofill
         "author": "",                       // Autofill
         "coverURL": "",                     // Autofill
         "lastChapterURL": false,            // Autofill; Can be used if not starting from the first chapter,
-                                            // first chapter downloaded will be NEXT from this
+                                               // first chapter downloaded will be NEXT from this
         "lastVolume": 0,                    // Autofill; Can be used if not starting from the first chapter,
-                                            // first eBook number created will be NEXT from this
+                                               // first eBook number created will be NEXT from this
         "completed": false,                 // Autofill; Set to false with settings above to download
-                                            // chapters again; Set to true by hand to skip checking the novel
+                                               // chapters again; Set to true by hand to skip checking the novel
         "hosting": "NF",                    // Hosting code, see "supportedHosting"
         "volumeChapterCount": 5,            // After how many new/unread chapters to send a new eBook,
-                                            // ignored if WebNovel is completed
+                                               // ignored if WebNovel is completed
         "completedVolumeChapterCount": 50,  // How many chapters to pack per eBook
         "redownload": false                 // Redownload all chapters, repack into volumes, do not send via
-                                            // email, intended for completed series archiving
+                                               // email, intended for completed series archiving
         "sendOnly": false,                  // TODO: only send epub files via email, for cases with external
-                                            // source of epub files
+                                               // source of epub files
         "sendOnlyRegex": ""(?<volume>\\d*). (?<title>.*); (?<author>.*)"" // TODO: metadata regex for
-                                            // extracting information from filename for external sources
+                                               // extracting information from filename for external sources
     },
     "novels": [
                                             // Table of novels to process, insert the template structure
-                                            // from above here
+                                               // from above here
     ]
 }
 ```
