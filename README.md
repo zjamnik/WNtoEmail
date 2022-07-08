@@ -47,7 +47,7 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
         "lastVolume": 0,                    // Autofill; Can be used if not starting from the first chapter,
                                                // first eBook number created will be NEXT from this
         "completed": false,                 // Autofill; Set to false with settings above to download
-                                               // chapters again; Set to true by hand to skip checking the novel
+                                               // chapters again; Set to true to skip checking the novel
         "hosting": "NF",                    // Hosting code, see "supportedHosting"
         "volumeChapterCount": 5,            // After how many new/unread chapters to send a new eBook,
                                                // ignored if WebNovel is completed
