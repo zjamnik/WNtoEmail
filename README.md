@@ -54,10 +54,10 @@ At first start it will create an empty config file `./novelConfig.conf`, adjust 
         "completedVolumeChapterCount": 50,  // How many chapters to pack per eBook
         "redownload": false                 // Redownload all chapters, repack into volumes, do not send via
                                                // email, intended for completed series archiving
-        "sendOnly": false,                  // TODO: only send epub files via email, for cases with external
+        "sendOnly": false,                  // Only send epub files via email, for cases with external
                                                // source of epub files
-        "sendOnlyRegex": ""(?<volume>\\d*). (?<title>.*); (?<author>.*)"" // TODO: metadata regex for
-                                               // extracting information from filename for external sources
+        "sendOnlyRegex": ""(?<volume>\\d*). (?<title>.*); (?<author>.*)"" // Metadata regex for extracting
+                                               // information from filename for external sources
     },
     "novels": [
                                             // Table of novels to process, insert the template structure

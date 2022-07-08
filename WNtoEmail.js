@@ -40,6 +40,7 @@ function log(text) {
 	let d = new Date();
 	let dateTime = `${d.getFullYear()}.${padNumber((d.getMonth() + 1), 2)}.${padNumber(d.getDate(), 2)}_${padNumber(d.getHours(), 2)}:${padNumber(d.getMinutes(), 2)}:${padNumber(d.getSeconds(), 2)}.${padNumber(d.getMilliseconds(), 3)}`;
 	fs.appendFile(cleanPath(`./WNtoEmail.log`), `${dateTime} ${text}\n`);
+	console.log(text);
 }
 
 async function mkDir(dirPath) {
@@ -93,8 +94,8 @@ async function loadConfig() {
 			"volumeChapterCount": 5,
 			"completedVolumeChapterCount": 50,
 			"redownload": false,
-			"sendOnly": false, // TODO: only send epub files via email, for cases with external source of epub files or after "redownload"
-			"sendOnlyRegex": "(?<volume>\\d*). (?<title>.*); (?<author>.*)" // TODO: metadata regex for extracting information from filename for external sources
+			"sendOnly": false,
+			"sendOnlyRegex": "(?<volume>\\d*). (?<title>.*); (?<author>.*)"
 		},
 		"novels": []
 	};
@@ -138,21 +139,17 @@ async function convertEbook(dir, file, params = { "cover": false, "authors": fal
 	convertParams += params['authors'] ? ` --authors "${params['authors']}"` : '';
 	convertParams += params['title'] ? ` --title "${params['title']}"` : '';
 
-	console.log(`Converting volume: ${file1Path}`);
 	log(`Converting volume: ${file1Path}`);
 
 	exec(`${config['converterPath']} "${file1Path}" "${file2Path}"${convertParams}`, (error, stdout, stderr) => {
 		if (error) {
-			console.log(`error: ${error.message}`);
 			log(`error: ${error.message}`);
 			return;
 		}
 		if (stderr) {
-			console.log(`stderr: ${stderr}`);
 			log(`stderr: ${stderr}`);
 			return;
 		}
-		console.log(`stdout: ${stdout}`);
 		log(`stdout: ${stdout}`);
 	});
 }
@@ -179,13 +176,12 @@ function sendEbook(subject, ebookAttachments) {
 
 			transporter.sendMail(message, (err) => {
 				if (err)
-					console.log(err);
-				log(err);
+					log(`Send mail error: ${err}`);
 			});
 
-			console.log(`Sent volumes:`);
-			log(`Sent volumes:`);
-			splicedAttachments[i].forEach(elem => console.log(elem['filename']));
+			let sentVolumes = '';
+			splicedAttachments[i].forEach(elem => { sentVolumes += '\n' + elem['filename']; });
+			log(`Sent volumes:${sentVolumes}`);
 		}
 	}
 }
@@ -263,6 +259,15 @@ async function getNovelInfo(response, hosting) {
 			info = [title, author, completed, 'https://novelfull.com' + firstChapterURL, 'https://novelfull.com' + coverURL];
 			break;
 
+		case 'TNC':
+			html.querySelectorAll('a').forEach(elem => {
+				if (elem.innerText.match('Volume')) {
+					info = elem.innerText.match(/\d+/)[0];
+				}
+			});
+
+			break;
+
 		default:
 			info = false;
 	}
@@ -311,10 +316,8 @@ function getChapterContent(response, hosting) {
 async function main() {
 	await loadConfig();
 
-	for (let i = 0; i < config['novels'].length; ++i) {
+	for (let i = 9; i < config['novels'].length; ++i) {
 		let novel = clone(config['novels'][i]);
-		let chapters = [];
-		let nextChapterURL;
 
 		if (novel['redownload']) {
 			novel['completed'] = false;
@@ -323,124 +326,168 @@ async function main() {
 		}
 
 		if (!novel['completed']) {
-			let novelInfo = await fetchNovelInfo(novel['novelURL'], 'NF');
+			if (novel.sendOnly) {
+				await sendOnlyFunction(novel, i);
+			} else {
+				await downloadChaptersFunction(novel, i);
+			}
+		}
+	}
 
-			novel['title'] = novelInfo[0];
-			novel['author'] = novelInfo[1];
-			novel['completed'] = novelInfo[2];
-			novel['coverURL'] = novelInfo[4];
+	async function sendOnlyFunction(novel, i) {
+		let ebookAttachments = [];
+		const novelPath = `${config.downloadLocation}/${novel.title}`;
+		const novelVolumeRegex = new RegExp(novel.sendOnlyRegex);
 
+		let lastVolumeOnline = parseInt(await fetchNovelInfo(novel['novelURL'], 'TNC'));
+
+		if (lastVolumeOnline > novel.lastVolume) {
+			log(`New volume found online: ${novel.title} ${lastVolumeOnline}`);
+		}
+
+		// let ebookList = await fs.opendir(cleanPath(novelPath));
+		// console.log(ebookList);
+
+		try {
+			const files = await fs.readdir(cleanPath(novelPath));
+			for (const file of files) {
+				if (file.match(new RegExp(config.ebookFormat))) {
+					const lastVolume = parseInt(file.match(novelVolumeRegex).groups.volume);
+					if (lastVolume > novel.lastVolume) {
+						ebookAttachments.push({
+							filename: cleanPath(`${file}`),
+							path: cleanPath(`${novelPath}/${file}`)
+						});
+						novel.lastVolume = lastVolume;
+					}
+				}
+			}
+		} catch (err) {
+			log(err);
+		}
+
+		config['novels'][i] = clone(novel);
+		await saveConfig();
+
+		sendEbook(novel['title'], ebookAttachments);
+	}
+
+	async function downloadChaptersFunction(novel, i) {
+		let chapters = [];
+		let nextChapterURL;
+		let novelInfo = await fetchNovelInfo(novel['novelURL'], 'NF');
+
+		novel['title'] = novelInfo[0];
+		novel['author'] = novelInfo[1];
+		novel['completed'] = novelInfo[2];
+		novel['coverURL'] = novelInfo[4];
+
+		config['novels'][i] = clone(novel);
+		await saveConfig();
+
+		if (!novel['lastChapterURL']) {
+			novel['lastChapterURL'] = novelInfo[3];
+
+			let chapter = await fetchChapter(novelInfo[3], 'NF');
+			log('Downloaded chapter: ' + chapters.length + ' ' + novelInfo[3]);
+			chapters.push(chapter);
+		}
+
+		let novelDir = `${config['downloadLocation']}/${novel['title']}`;
+
+		const nextChapterURLtemp = await fetchChapter(novel['lastChapterURL'], 'NF');
+		nextChapterURL = nextChapterURLtemp[1];
+
+		while (nextChapterURL) {
+			novel['lastChapterURL'] = nextChapterURL;
+			let chapter = await fetchChapter(nextChapterURL, 'NF');
+			log('Downloaded chapter: ' + chapters.length + ' ' + nextChapterURL);
+			chapters.push(chapter);
+			nextChapterURL = chapter[1];
+		}
+
+		let startVol = novel['lastVolume'];
+		let totalChapters = chapters.length;
+
+		const maxVolume = novel['completed'] ? startVol + Math.ceil(totalChapters / novel['completedVolumeChapterCount']) : startVol + Math.floor(totalChapters / novel['completedVolumeChapterCount']);
+		const maxVolLen = (novel['completed'] ? maxVolume :
+			maxVolume + Math.floor((chapters.length - (maxVolume * novel['completedVolumeChapterCount'])) / novel['volumeChapterCount'])).toString().length;
+
+		let ebookAttachments = [];
+
+		for (let vol = startVol; vol < maxVolume; vol++) {
+			let volContent = '';
+
+			let chap;
+			for (chap = 0; chap < novel['completedVolumeChapterCount'] && chap < chapters.length; chap++) {
+				volContent += chapters[chap][0] + '\n';
+			}
+
+			novel['lastChapterURL'] = chapters[(chap - 2 < 0 ? 0 : chap - 2)][1];
+			novel['lastVolume'] = vol + 1;
 			config['novels'][i] = clone(novel);
 			await saveConfig();
 
-			if (!novel['lastChapterURL']) {
-				novel['lastChapterURL'] = novelInfo[3];
+			let novelFileName = `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}; ${novel['author']}`;
 
-				let chapter = await fetchChapter(novelInfo[3], 'NF');
-				console.log('Downloaded chapter: ' + chapters.length + ' ' + novelInfo[3]);
-				log('Downloaded chapter: ' + chapters.length + ' ' + novelInfo[3]);
-				chapters.push(chapter);
+			await writeFile(novelDir, `${novelFileName}.html`, volContent);
+			log(`Saved volume: ${novelFileName}`);
+
+			await convertEbook(novelDir, novelFileName, {
+				cover: novel['coverURL'],
+				authors: novel['author'],
+				title: `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}`
+			});
+
+			ebookAttachments.push({
+				filename: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
+				path: cleanPath(`${novelDir}/${novelFileName}.${config['ebookFormat']}`)
+			});
+
+			chapters.splice(0, chap);
+		}
+
+		startVol = novel['lastVolume'];
+		totalChapters = chapters.length;
+
+		for (let vol = startVol; vol < startVol + Math.floor(totalChapters / novel['volumeChapterCount']); vol++) {
+			let volContent = '';
+
+			let chap;
+			for (chap = 0; chap < novel['volumeChapterCount'] && chap < chapters.length; chap++) {
+				volContent += chapters[chap][0] + '\n';
 			}
 
-			let novelDir = `${config['downloadLocation']}/${novel['title']}`;
+			novel['lastChapterURL'] = chapters[(chap - 2 < 0 ? 0 : chap - 2)][1];
+			novel['lastVolume'] = vol + 1;
+			config['novels'][i] = clone(novel);
+			await saveConfig();
 
-			const nextChapterURLtemp = await fetchChapter(novel['lastChapterURL'], 'NF');
-			nextChapterURL = nextChapterURLtemp[1];
+			let novelFileName = `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}; ${novel['author']}`;
 
-			while (nextChapterURL) {
-				novel['lastChapterURL'] = nextChapterURL;
-				let chapter = await fetchChapter(nextChapterURL, 'NF');
-				console.log('Downloaded chapter: ' + chapters.length + ' ' + nextChapterURL);
-				log('Downloaded chapter: ' + chapters.length + ' ' + nextChapterURL);
-				chapters.push(chapter);
-				nextChapterURL = chapter[1];
-			}
+			await writeFile(novelDir, `${novelFileName}.html`, volContent);
+			log(`Saved volume: ${novelFileName}`);
 
-			let startVol = novel['lastVolume'];
-			let totalChapters = chapters.length;
+			await convertEbook(novelDir, novelFileName, {
+				cover: novel['coverURL'],
+				authors: novel['author'],
+				title: `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}`
+			});
 
-			const maxVolume = novel['completed'] ? startVol + Math.ceil(totalChapters / novel['completedVolumeChapterCount']) : startVol + Math.floor(totalChapters / novel['completedVolumeChapterCount']);
-			const maxVolLen = (novel['completed'] ? maxVolume :
-				maxVolume + Math.floor((chapters.length - (maxVolume * novel['completedVolumeChapterCount'])) / novel['volumeChapterCount'])).toString().length;
+			ebookAttachments.push({
+				filename: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
+				path: cleanPath(`${novelDir}/${novelFileName}.${config['ebookFormat']}`)
+			});
 
-			let ebookAttachments = [];
-
-			for (let vol = startVol; vol < maxVolume; vol++) {
-				let volContent = '';
-
-				let chap;
-				for (chap = 0; chap < novel['completedVolumeChapterCount'] && chap < chapters.length; chap++) {
-					volContent += chapters[chap][0] + '\n';
-				}
-
-				novel['lastChapterURL'] = chapters[(chap - 2 < 0 ? 0 : chap - 2)][1];
-				novel['lastVolume'] = vol + 1;
-				config['novels'][i] = clone(novel);
-				await saveConfig();
-
-				let novelFileName = `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}; ${novel['author']}`;
-
-				await writeFile(novelDir, `${novelFileName}.html`, volContent);
-				console.log(`Saved volume: ${novelFileName}`);
-				log(`Saved volume: ${novelFileName}`);
-
-				await convertEbook(novelDir, novelFileName, {
-					cover: novel['coverURL'],
-					authors: novel['author'],
-					title: `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}`
-				});
-
-				ebookAttachments.push({
-					filename: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
-					path: cleanPath(`${novelDir}/${novelFileName}.${config['ebookFormat']}`)
-				});
-
-				chapters.splice(0, chap);
-			}
-
-			startVol = novel['lastVolume'];
-			totalChapters = chapters.length;
-
-			for (let vol = startVol; vol < startVol + Math.floor(totalChapters / novel['volumeChapterCount']); vol++) {
-				let volContent = '';
-
-				let chap;
-				for (chap = 0; chap < novel['volumeChapterCount'] && chap < chapters.length; chap++) {
-					volContent += chapters[chap][0] + '\n';
-				}
-
-				novel['lastChapterURL'] = chapters[(chap - 2 < 0 ? 0 : chap - 2)][1];
-				novel['lastVolume'] = vol + 1;
-				config['novels'][i] = clone(novel);
-				await saveConfig();
-
-				let novelFileName = `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}; ${novel['author']}`;
-
-				await writeFile(novelDir, `${novelFileName}.html`, volContent);
-				console.log(`Saved volume: ${novelFileName}`);
-				log(`Saved volume: ${novelFileName}`);
-
-				await convertEbook(novelDir, novelFileName, {
-					cover: novel['coverURL'],
-					authors: novel['author'],
-					title: `${padNumber((vol + 1), maxVolLen)}. ${novel['title']}`
-				});
-
-				ebookAttachments.push({
-					filename: cleanPath(`${novelFileName}.${config['ebookFormat']}`),
-					path: cleanPath(`${novelDir}/${novelFileName}.${config['ebookFormat']}`)
-				});
-
-				chapters.splice(0, chap);
-			}
-			if (!novel['redownload']) {
-				sendEbook(novel['title'], ebookAttachments);
-			}
-			else {
-				novel['redownload'] = false;
-				config['novels'][i] = clone(novel);
-				saveConfig();
-			}
+			chapters.splice(0, chap);
+		}
+		if (!novel['redownload']) {
+			sendEbook(novel['title'], ebookAttachments);
+		}
+		else {
+			novel['redownload'] = false;
+			config['novels'][i] = clone(novel);
+			saveConfig();
 		}
 	}
 }
