@@ -39,7 +39,7 @@ function padNumber(num, len) {
 function log(text) {
 	let d = new Date();
 	let dateTime = `${d.getFullYear()}.${padNumber((d.getMonth() + 1), 2)}.${padNumber(d.getDate(), 2)}_${padNumber(d.getHours(), 2)}:${padNumber(d.getMinutes(), 2)}:${padNumber(d.getSeconds(), 2)}.${padNumber(d.getMilliseconds(), 3)}`;
-	fs.appendFile(cleanPath(`./WNtoEmail.log`), `${dateTime} ${text}\n`);
+	fs.appendFile(cleanPath(`${__dirname}/WNtoEmail.log`), `${dateTime} ${text}\n`);
 	console.log(text);
 }
 
@@ -103,7 +103,7 @@ async function loadConfig() {
 	};
 
 	try {
-		config = JSON.parse(await readFile(`./novelConfig.conf`));
+		config = JSON.parse(await readFile(`${__dirname}/novelConfig.json`));
 		transporter = nodemailer.createTransport({
 			service: config['emailProvider'],
 			auth: {
@@ -111,11 +111,11 @@ async function loadConfig() {
 				pass: config['emailPassword']
 			}
 		});
-		await writeFile('.', 'novelConfig.conf', JSON.stringify(config, null, 4));
-		await writeFile('.', 'novelConfig.bak.conf', JSON.stringify(config, null, 4));
+		await writeFile('__dirname', 'novelConfig.json', JSON.stringify(config, null, 4));
+		await writeFile('__dirname', 'novelConfig.bak.json', JSON.stringify(config, null, 4));
 	}
 	catch (err) {
-		await writeFile('.', 'novelConfig.conf', JSON.stringify(novelConfigDefault, null, 4));
+		await writeFile('__dirname', 'novelConfig.json', JSON.stringify(novelConfigDefault, null, 4));
 		config = novelConfigDefault;
 	}
 
@@ -129,7 +129,7 @@ async function loadConfig() {
 }
 
 async function saveConfig() {
-	await writeFile(__dirname, 'novelConfig.conf', JSON.stringify(config, null, 4));
+	await writeFile(__dirname, 'novelConfig.json', JSON.stringify(config, null, 4));
 }
 
 async function convertEbook(dir, file, { cover = false, authors = false, title = false, format = 'html', file2 = false } = {}) {
@@ -346,7 +346,7 @@ async function main() {
 		let lastVolumeOnline = parseInt(await fetchNovelInfo(novel['novelURL'], 'TNC'));
 
 		if (lastVolumeOnline > novel.lastVolume) {
-			log(`New volume found online: ${novel.title} ${lastVolumeOnline}`);
+			log(`New volume found online: ${novel.title} ${lastVolumeOnline} ${novel.novelURL}`);
 		}
 
 		// let ebookList = await fs.opendir(cleanPath(novelPath));

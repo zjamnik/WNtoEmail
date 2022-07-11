@@ -1,6 +1,7 @@
 # Project specific
 Download/**/** 
-*.conf
+novelConfig.json
+novelConfig*.json
 Release
 WNtoEmail
 
